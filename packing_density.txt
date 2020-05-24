@@ -1,1 +1,14 @@
-tess_area = 0.00961835 grain area = 0.00795765 package density= 0.827341
+tess_area = 0.00931537 grain area = 0.00776681 package density= 0.833763
+
+tess_area = 0.00931537 grain area = 0.00776681 package density= 0.833763
+tess_area = 0.00931537 grain area = 0.00776681 package density= 0.833763
+tess_area = 0 grain area = 0 package density= -nan
+tess_area = 0.00931537 grain area = 0.00776681 package density= 0.833763
+tess_area = 0.00930419 grain area = 0.00775663 package density= 0.833671
+tess_area = 0.00930419 grain area = 0.00775663 package density= 0.833671
+tess_area = 0 grain area = 0.00775663 package density= inf
+tess_area = 0.00930419 grain area = 0.00775663 package density= 0.833671
+tess_area = 0.00931537 grain area = 0.00776681 package density= 0.833763
+tess_area = 0.00931537 grain area = 0.00776681 package density= 0.833763
+tess_area = 0.00931537 grain area = 0.00776681 package density= 0.833763
+tess_area = 0.00931537 grain area = 0.00776681 package density= 0.833763

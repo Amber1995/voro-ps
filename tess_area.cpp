@@ -40,6 +40,10 @@ int main(int argc, char** argv) {
 // only store the positive vertice id numbering
   
   while (inR.read_row(radi)) radius.emplace_back(radi);
+
+// find the maximum radius in order to ignore the left column and bottom layer when plotting postscript.
+  double max_radius = *(std::max_element(radius.begin(), radius.end()));
+
   while (inG.read_row(grain_x,grain_y))grain_xy.emplace_back(std::make_pair(grain_x, grain_y)) ;
 // Maximum x and y; used to set boundaries of the postscripts as 1.2 times of 10000*x and 10000*y;
   for (auto it = grain_xy.begin(); it != grain_xy.end(); ++it) {
@@ -74,15 +78,15 @@ int main(int argc, char** argv) {
   fout<<"%%Title: Voronoi Tessellation \n";
   
 // Calculate the area of each cell stored in connects map
-  for (auto it = connects.begin(); it != connects.end(); ++it, ++n) {
+  for (auto it = connects.begin(); it != connects.end(); it++, n++) {
     fout<<"newpath \n";
     double area = 0, length,dg_area;
     std::vector<std::pair<double, double>> temp = it->second;
 // Enumerate the vertices vector by "it"
     dg_area = M_PI * std::pow(radius[n], 2);
-    for (auto m = temp.begin(); m != temp.end(); ++m) {
+    for (auto m = temp.begin(); m != temp.end(); m++) {
       auto next = m + 1;
-      if (m == (temp.end() - 1)) next = temp.begin();
+      if (m == (temp.end()-1)){next = temp.begin();}
       dx = (next->first) - (m->first);
       dy = (next->second) - (m->second);
       length = std::pow((dx * dx + dy * dy), 0.5);
@@ -90,10 +94,11 @@ int main(int argc, char** argv) {
         area = 0;
         dg_area=0;
         break;}
-      area += ((m->first) * (next->second)) - ((next->first) * (m->second));
+      if (it->first>0)
+      {area += ((m->first) * (next->second)) - ((next->first) * (m->second));
       fout<<(m->first)*10000<<"\t"<<(m->second)*10000;
       if(m==temp.begin())fout<<" moveto \n";
-      else fout<<" lineto \n";
+      else fout<<" lineto \n";}
 // Output the coordinates of vertices of eacn cell whose length is less than 4 times of grain radius and indice is positive;
     }
     g_area +=dg_area;
@@ -101,6 +106,7 @@ int main(int argc, char** argv) {
     fout<<"closepath \n";
     fout<<"1 setlinewidth 1 0 0 setrgbcolor \n";
     fout<<"stroke \n";
+    if (grain_xy[n].first>max_radius&&grain_xy[n].second>max_radius)
     fout<<"newpath "<<(grain_xy[n].first)*10000<<" "<<(grain_xy[n].second)*10000<<" "<<radius[n]*7000<<" 0.0 setlinewidth 0.4 setgray 0 360 arc gsave fill grestore"<<std::endl;
   }
   fout.close();
