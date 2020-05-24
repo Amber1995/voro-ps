@@ -1,6 +1,7 @@
 # voro-ps
+Compute the packing density as well as plotting the tesslation
 
-The only inputfile is the DEM000*.dat, you have to delete other files ended in .txt and .data under the folder. Then run
+The only inputfile is the DEM000*.dat, you have to delete other files ended in .txt and .data under the folder before running the shell file named "voro-area.sh". Then run
 sh voro-area.sh
 
 (As in the voro-area.sh, the first step is to compile *.cpp to generate excutable file table and tess_area;
