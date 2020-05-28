@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
   io::CSVReader<3> inV("Vertices.data");
   io::CSVReader<1> inR("Radius.data");
   double vertice_x, vertice_y, radii, grain_x, grain_y, dx, dy, density,
-      void_area, wd = 0., ht = 0.;
+      void_area, xmax = 0., wd = 0., ht = 0.;
   double tess_area = 0.,
          g_area = 0.;  // area is of single cell;Area is the Tesselaton area
   signed int connect;
@@ -49,11 +49,12 @@ int main(int argc, char** argv) {
   while (inG.read_row(grain_x, grain_y))
     grain_xy.emplace_back(std::make_pair(grain_x, grain_y));
   // Maximum x and y; used to set boundaries of the postscripts as 1.2 times of
+  // 10000*x and 10000*y;
   for (auto it = grain_xy.begin(); it != grain_xy.end(); ++it) {
-    if ((it->first) > wd) wd = (it->first);
+    if ((it->first) > xmax) xmax = (it->first);
     if ((it->second) > ht) ht = (it->second);
   }
-  wd = 12000 * wd;
+  wd = 12000 * xmax;
   ht = 12000 * ht;
 
   while (inC.read_row(cell, connect)) {
@@ -96,50 +97,54 @@ int main(int argc, char** argv) {
   // Calculate the area of each cell stored in connects map
   for (int n = 0; n < k; ++n) {
     int in = n + 1;
-    fout << "newpath \n";
-    double area = 0, length, dg_area;
-    std::vector<std::pair<double, double>> temp = connects.find(in)->second;
-    // Enumerate the vertices vector by "it"
-    dg_area = M_PI * std::pow(radius[n], 2);
-    for (auto m = temp.begin(); m != temp.end(); ++m) {
-      auto next = m + 1;
-      if (m == (temp.end() - 1)) {
-        next = temp.begin();
-      }
-      dx = (next->first) - (m->first);
-      dy = (next->second) - (m->second);
-      length = std::pow((dx * dx + dy * dy), 0.5);
-      if (length > 4 * radius[n]) {
-        area = 0;
-        dg_area = 0;
-        break;
-      }
+    if (grain_xy[n].first >= xmax * 0.95) {
+      // plot and calculate the density of the flowfront
+      fout << "newpath \n";
+      double area = 0, length, dg_area;
+      std::vector<std::pair<double, double>> temp = connects.find(in)->second;
+      // Enumerate the vertices vector by "it"
+      dg_area = M_PI * std::pow(radius[n], 2);
+      for (auto m = temp.begin(); m != temp.end(); ++m) {
+        auto next = m + 1;
+        if (m == (temp.end() - 1)) {
+          next = temp.begin();
+        }
+        dx = (next->first) - (m->first);
+        dy = (next->second) - (m->second);
+        length = std::pow((dx * dx + dy * dy), 0.5);
+        if (length > 4 * radius[n]) {
+          area = 0;
+          dg_area = 0;
+          break;
+        }
 
-      area += ((m->first) * (next->second)) - ((next->first) * (m->second));
-      fout << (m->first) * 10000 << "\t" << (m->second) * 10000;
-      if (m == temp.begin())
-        fout << " moveto \n";
-      else
-        fout << " lineto \n";
-      // Output the coordinates of vertices of eacn cell whose length is less
-      // than 4 times of grain radius and indice is positive;
+        area += ((m->first) * (next->second)) - ((next->first) * (m->second));
+        fout << (m->first) * 10000 << "\t" << (m->second) * 10000;
+        if (m == temp.begin())
+          fout << " moveto \n";
+        else
+          fout << " lineto \n";
+        // Output the coordinates of vertices of eacn cell whose length is less
+        // than 4 times of grain radius and indice is positive;
+      }
+      g_area += dg_area;
+      tess_area += std::fabs(area) / 2;
+      fout << "closepath \n";
+      fout << "1 setlinewidth 1 0 0 setrgbcolor \n";
+      fout << "stroke \n";
+      //  if (grain_xy[n].first>max_radius&&grain_xy[n].second>max_radius)
+      fout << "newpath " << (grain_xy[n].first) * 10000 << " "
+           << (grain_xy[n].second) * 10000 << " " << radius[n] * 7000
+           << " 0.0 setlinewidth 0.4 setgray 0 360 arc gsave fill grestore"
+           << std::endl;
     }
-    g_area += dg_area;
-    tess_area += std::fabs(area) / 2;
-    fout << "closepath \n";
-    fout << "1 setlinewidth 1 0 0 setrgbcolor \n";
-    fout << "stroke \n";
-    fout << "newpath " << (grain_xy[n].first) * 10000 << " "
-         << (grain_xy[n].second) * 10000 << " " << radius[n] * 7000
-         << " 0.0 setlinewidth 0.4 setgray 0 360 arc gsave fill grestore"
-         << std::endl;
   }
   fout.close();
   void_area += tess_area - g_area;
   density = g_area / tess_area;
 
   std::ofstream outfile;
-  outfile.open("packing_density.txt",
+  outfile.open("flowfront_packing_density.txt",
                std::ios_base::app);  // append instead of overwrite
   outfile << "tess_area = " << tess_area << " grain area = " << g_area
           << " package density= " << density << "\n";
